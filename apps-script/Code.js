@@ -46,5 +46,15 @@ function batchGenerateTickets(channel, count) {
 }
 
 function doGet(e) {
-  return HtmlService.createHtmlOutput('qrgate backend is running.');
+  var isBridgeMode = e && e.parameter && e.parameter.bridge === '1';
+  var serviceUrl = ScriptApp.getService().getUrl();
+  var match = serviceUrl && serviceUrl.match(/\/macros\/s\/([^/]+)\/(?:exec|dev)/);
+  var deploymentId = match ? match[1] : null;
+
+  var template = HtmlService.createTemplateFromFile('Bridge');
+  template.deploymentId = deploymentId || '';
+  template.isBridgeMode = isBridgeMode;
+  return template
+    .evaluate()
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

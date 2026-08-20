@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <base target="_top" />
+    <title>QRGate Bridge</title>
+  </head>
+
+  <body>
+    <div
+      id="top-page"
+      style="
+        display: none;
+        font-family: sans-serif;
+        padding: 2rem;
+        text-align: center;
+        line-height: 1.6;
+      "
+    >
+      <? if (!deploymentId) { ?>
+      <p style="color: #c62828; font-weight: bold">
+        無法取得部署 ID，請確認此腳本已部署為 Web 應用程式。
+      </p>
+      <? } else { ?>
+      <p style="color: #2e7d32; font-weight: bold">✅ qrgate 後台運作中</p>
+      <p>部署 ID：<code><?= deploymentId ?></code></p>
+      <? } ?>
+    </div>
+
+    <script>
+      const isBridgeMode = "<?= isBridgeMode ?>" === "true";
+
+      if (isBridgeMode) {
+        const channel = new MessageChannel();
+
+        channel.port1.onmessage = function (event) {
+          const data = event.data;
+          if (!data || !data.action) return;
+
+          if (data.action === "checkInTicket") {
+            google.script.run
+              .withSuccessHandler((res) =>
+                channel.port1.postMessage({
+                  id: data.id,
+                  status: "success",
+                  result: res,
+                }),
+              )
+              .withFailureHandler((err) =>
+                channel.port1.postMessage({
+                  id: data.id,
+                  status: "error",
+                  error: err.message,
+                }),
+              )
+              .checkInTicket(data.payload.serial, data.payload.gateId);
+          }
+        };
+
+        window.top.postMessage({ action: "GAS_READY" }, "*", [
+          channel.port2,
+        ]);
+      } else {
+        document.getElementById("top-page").style.display = "block";
+      }
+    </script>
+  </body>
+</html>
