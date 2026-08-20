@@ -14,14 +14,11 @@ const gasIframe = document.getElementById("gas-bridge");
 const GATE_ID_STORAGE_KEY = "qrgate.gateId";
 const SCAN_FPS = 12;
 const SCAN_QRBOX = { width: 260, height: 260 };
-// 掃到之後凍結畫面、疊顯結果多久才自動恢復掃描下一張。
-const RESULT_DISPLAY_MS = 2000;
 
-let status = "idle"; // idle | scanning | processing (frozen, showing a result)
+let status = "idle"; // idle | scanning | processing (paused, waiting on checkInTicket)
 let currentCamera = "environment";
 let html5Qrcode = null;
 let isScannerRunning = false;
-let resumeTimeoutId = null;
 
 gateIdInput.value = localStorage.getItem(GATE_ID_STORAGE_KEY) || "";
 gateIdInput.addEventListener("input", () => {
@@ -118,7 +115,7 @@ const OUTCOME_DISPLAY = {
 };
 
 function showBanner(type, message) {
-  resultBanner.style.display = "flex";
+  resultBanner.style.display = "block";
   resultBanner.dataset.type = type;
   resultBanner.textContent = message;
 }
@@ -156,7 +153,7 @@ function updateUI() {
     startBtn.textContent = "停止掃描";
     startBtn.disabled = false;
   } else if (status === "processing") {
-    // 畫面凍結、疊顯結果中：仍可提前按停止，但不能切換鏡頭。
+    // 驗證中，畫面暫停：仍可提前按停止，但不能切換鏡頭。
     flipBtn.disabled = true;
     startBtn.textContent = "停止掃描";
     startBtn.disabled = false;
@@ -176,7 +173,7 @@ async function handleScanSuccess(decodedText) {
   updateUI();
   if (html5Qrcode && isScannerRunning) {
     try {
-      html5Qrcode.pause(true); // 凍結畫面，讓工作人員看清楚剛掃到的碼與結果
+      html5Qrcode.pause(true); // 暫停畫面，避免驗證還沒回來就又掃到同一張票
     } catch (error) {
       console.warn("pause scanner failed:", error);
     }
@@ -184,20 +181,16 @@ async function handleScanSuccess(decodedText) {
 
   await submitCheckIn(data);
 
-  resumeTimeoutId = setTimeout(() => {
-    resumeTimeoutId = null;
-    if (status !== "processing") return; // 使用者在畫面凍結期間已按下停止掃描
-    hideBanner();
-    status = "scanning";
-    updateUI();
-    if (html5Qrcode && isScannerRunning) {
-      try {
-        html5Qrcode.resume();
-      } catch (error) {
-        console.warn("resume scanner failed:", error);
-      }
+  if (status !== "processing") return; // 使用者在驗證中已按下停止掃描
+  status = "scanning";
+  updateUI();
+  if (html5Qrcode && isScannerRunning) {
+    try {
+      html5Qrcode.resume(); // 結果一出來就恢復掃描，不強制停留——banner 會留著顯示剛才的結果
+    } catch (error) {
+      console.warn("resume scanner failed:", error);
     }
-  }, RESULT_DISPLAY_MS);
+  }
 }
 
 function handleScanError() {
@@ -257,11 +250,6 @@ async function startScanning() {
 
 async function stopScanning() {
   status = "idle";
-  if (resumeTimeoutId) {
-    clearTimeout(resumeTimeoutId);
-    resumeTimeoutId = null;
-  }
-  hideBanner();
 
   if (html5Qrcode && isScannerRunning) {
     try {
