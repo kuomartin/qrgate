@@ -35,8 +35,18 @@ function setConnectionStatus(type, text) {
 }
 
 // ====== 網址參數解析與 iframe 初始化 (bridge handshake) ======
-const urlParams = new URLSearchParams(window.location.search);
-const deployId = urlParams.get("id");
+// id 放在 hash（#id=...）而不是 query（?id=...）：hash 不會被瀏覽器送到伺服器，
+// 不會出現在 GitHub Pages 的存取紀錄裡。讀取後立刻用 replaceState 清掉網址列，
+// 降低事後被螢幕分享/瀏覽器歷史記錄外流的機會。deployment id 本身仍不是機密
+// （見 ADR-0002：知道連結本身就是唯一的存取控制），這只是降低留痕的機會。
+// 仍相容舊的 ?id=... 連結，避免已經發出去的連結失效。
+const hashParams = new URLSearchParams(window.location.hash.slice(1));
+const searchParams = new URLSearchParams(window.location.search);
+const deployId = hashParams.get("id") || searchParams.get("id");
+
+if (window.location.hash || window.location.search) {
+  window.history.replaceState(null, "", window.location.pathname);
+}
 
 if (deployId) {
   setConnectionStatus("connecting", "Bridge 連線中");

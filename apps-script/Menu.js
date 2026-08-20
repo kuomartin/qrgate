@@ -56,7 +56,9 @@ function showScanLinkDialog() {
     return;
   }
 
-  var scanUrl = SCANNER_BASE_URL + '?id=' + encodeURIComponent(deploymentId);
+  // Hash, not query — never sent to the server, so it won't show up in
+  // GitHub Pages' access logs (see docs/scan/app.js for the read side).
+  var scanUrl = SCANNER_BASE_URL + '#id=' + encodeURIComponent(deploymentId);
   var template = HtmlService.createTemplateFromFile('ScanLinkDialog');
   template.scanUrl = scanUrl;
   ui.showModalDialog(template.evaluate().setWidth(360).setHeight(420), '掃描連結與 QR Code');
