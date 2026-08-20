@@ -30,19 +30,20 @@ function checkInTicket(serial, gateId) {
 
 function issueOnlineTicket(registrationPayload) {
   var serial = generateSerial('online', getEventSecret_());
-  appendIssuedTicket_(serial, 'online');
+  appendIssuedTickets_([{ serial: serial, channel: 'online' }]);
   return { serial: serial, channel: 'online' };
 }
 
 function batchGenerateTickets(channel, count) {
   var secret = getEventSecret_();
-  var serials = [];
+  var entries = [];
   for (var i = 0; i < count; i++) {
-    var serial = generateSerial(channel, secret);
-    appendIssuedTicket_(serial, channel);
-    serials.push(serial);
+    entries.push({ serial: generateSerial(channel, secret), channel: channel });
   }
-  return serials;
+  appendIssuedTickets_(entries);
+  return entries.map(function (entry) {
+    return entry.serial;
+  });
 }
 
 function doGet(e) {

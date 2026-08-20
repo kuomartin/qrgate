@@ -63,6 +63,15 @@ var sheetTicketStore = {
   },
 };
 
-function appendIssuedTicket_(serial, channel) {
-  getTicketsSheet_().appendRow([serial, channel, 'issued', new Date(), '', '']);
+// Writes all entries in a single setValues() call rather than one appendRow()
+// per ticket — batch-generating hundreds of physical tickets one row at a
+// time was slow enough to be noticeable in the Sheet menu.
+function appendIssuedTickets_(entries) {
+  var sheet = getTicketsSheet_();
+  var now = new Date();
+  var rows = entries.map(function (entry) {
+    return [entry.serial, entry.channel, 'issued', now, '', ''];
+  });
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 1, rows.length, TICKET_HEADERS.length).setValues(rows);
 }
