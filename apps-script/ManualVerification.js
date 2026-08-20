@@ -38,3 +38,13 @@ function runAcceptanceChecks() {
   Logger.log(log);
   return log;
 }
+
+// One-off helper for #4's manual phone-camera test: generates a single fresh,
+// issued physical-channel serial and logs it so it can be turned into a QR
+// code to scan against the deployed scanner page.
+function generateTestTicketForScanning() {
+  setup();
+  var serial = batchGenerateTickets('physical', 1)[0];
+  Logger.log(serial);
+  return serial;
+}
