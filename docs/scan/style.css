@@ -72,13 +72,31 @@ h1 {
   font-size: 1rem;
 }
 
-#video-container {
+#scanner-stage {
+  position: relative;
+  min-height: 220px;
   margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e0e0e0;
 }
 
 #qr-reader {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 1.15rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .controls {

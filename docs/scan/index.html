@@ -10,7 +10,7 @@
     <iframe id="gas-bridge" style="display: none"></iframe>
 
     <div id="url-warning" class="banner banner-warning" style="display: none">
-      缺少部署 ID！請確認網址結尾包含 <code>?id=您的部署ID</code>
+      缺少部署 ID！請確認網址結尾包含 <code>#id=您的部署ID</code>
     </div>
 
     <div class="container">
@@ -30,16 +30,15 @@
         />
       </div>
 
-      <div id="video-container" style="display: none">
+      <div id="scanner-stage">
         <div id="qr-reader"></div>
+        <div id="result-banner" class="banner banner-overlay" style="display: none"></div>
       </div>
 
       <div class="controls">
         <button id="start-button">開始掃描</button>
         <button id="flip-button" disabled>切換鏡頭</button>
       </div>
-
-      <div id="result-banner" class="banner" style="display: none"></div>
     </div>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>

@@ -5,7 +5,6 @@ const connectionStatusText = document.getElementById(
   "connection-status-text",
 );
 const gateIdInput = document.getElementById("gate-id");
-const videoContainer = document.getElementById("video-container");
 const qrReaderElem = document.getElementById("qr-reader");
 const startBtn = document.getElementById("start-button");
 const flipBtn = document.getElementById("flip-button");
@@ -13,16 +12,16 @@ const resultBanner = document.getElementById("result-banner");
 const gasIframe = document.getElementById("gas-bridge");
 
 const GATE_ID_STORAGE_KEY = "qrgate.gateId";
-const DUPLICATE_SCAN_COOLDOWN_MS = 3000;
 const SCAN_FPS = 12;
 const SCAN_QRBOX = { width: 260, height: 260 };
+// 掃到之後凍結畫面、疊顯結果多久才自動恢復掃描下一張。
+const RESULT_DISPLAY_MS = 2000;
 
-let status = "idle"; // idle | scanning | processing
+let status = "idle"; // idle | scanning | processing (frozen, showing a result)
 let currentCamera = "environment";
 let html5Qrcode = null;
 let isScannerRunning = false;
-let lastScannedCode = null;
-let lastScanTimestamp = 0;
+let resumeTimeoutId = null;
 
 gateIdInput.value = localStorage.getItem(GATE_ID_STORAGE_KEY) || "";
 gateIdInput.addEventListener("input", () => {
@@ -119,9 +118,13 @@ const OUTCOME_DISPLAY = {
 };
 
 function showBanner(type, message) {
-  resultBanner.style.display = "block";
+  resultBanner.style.display = "flex";
   resultBanner.dataset.type = type;
   resultBanner.textContent = message;
+}
+
+function hideBanner() {
+  resultBanner.style.display = "none";
 }
 
 function submitCheckIn(serial) {
@@ -149,37 +152,52 @@ function submitCheckIn(serial) {
 // ====== QR 掃描 ======
 function updateUI() {
   if (status === "scanning") {
-    videoContainer.style.display = "block";
     flipBtn.disabled = false;
     startBtn.textContent = "停止掃描";
     startBtn.disabled = false;
   } else if (status === "processing") {
-    startBtn.disabled = true;
+    // 畫面凍結、疊顯結果中：仍可提前按停止，但不能切換鏡頭。
     flipBtn.disabled = true;
+    startBtn.textContent = "停止掃描";
+    startBtn.disabled = false;
   } else {
-    videoContainer.style.display = "none";
     flipBtn.disabled = true;
     startBtn.textContent = "開始掃描";
     startBtn.disabled = false;
   }
 }
 
-function handleScanSuccess(decodedText) {
+async function handleScanSuccess(decodedText) {
   if (status !== "scanning") return;
   const data = (decodedText || "").trim();
   if (!data) return;
 
-  const now = Date.now();
-  if (
-    data === lastScannedCode &&
-    now - lastScanTimestamp < DUPLICATE_SCAN_COOLDOWN_MS
-  ) {
-    return;
+  status = "processing";
+  updateUI();
+  if (html5Qrcode && isScannerRunning) {
+    try {
+      html5Qrcode.pause(true); // 凍結畫面，讓工作人員看清楚剛掃到的碼與結果
+    } catch (error) {
+      console.warn("pause scanner failed:", error);
+    }
   }
-  lastScannedCode = data;
-  lastScanTimestamp = now;
 
-  submitCheckIn(data);
+  await submitCheckIn(data);
+
+  resumeTimeoutId = setTimeout(() => {
+    resumeTimeoutId = null;
+    if (status !== "processing") return; // 使用者在畫面凍結期間已按下停止掃描
+    hideBanner();
+    status = "scanning";
+    updateUI();
+    if (html5Qrcode && isScannerRunning) {
+      try {
+        html5Qrcode.resume();
+      } catch (error) {
+        console.warn("resume scanner failed:", error);
+      }
+    }
+  }, RESULT_DISPLAY_MS);
 }
 
 function handleScanError() {
@@ -212,6 +230,7 @@ async function startCameraWithFallback(scannerConfig) {
 
 async function startScanning() {
   if (status !== "idle") return;
+  hideBanner();
 
   if (!window.Html5Qrcode) {
     showBanner("invalid", "掃描器載入失敗，請重新整理頁面。");
@@ -238,8 +257,11 @@ async function startScanning() {
 
 async function stopScanning() {
   status = "idle";
-  lastScannedCode = null;
-  lastScanTimestamp = 0;
+  if (resumeTimeoutId) {
+    clearTimeout(resumeTimeoutId);
+    resumeTimeoutId = null;
+  }
+  hideBanner();
 
   if (html5Qrcode && isScannerRunning) {
     try {
@@ -258,7 +280,7 @@ async function stopScanning() {
 }
 
 startBtn.addEventListener("click", async () => {
-  if (status === "scanning") await stopScanning();
+  if (status === "scanning" || status === "processing") await stopScanning();
   else if (status === "idle") await startScanning();
 });
 
