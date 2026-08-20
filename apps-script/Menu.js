@@ -45,17 +45,14 @@ function showBatchGeneratePhysicalPrompt() {
 
 var SCANNER_BASE_URL = 'https://kuomartin.github.io/qrgate/scan/';
 
-function getDeploymentId_() {
-  var serviceUrl = ScriptApp.getService().getUrl();
-  var match = serviceUrl && serviceUrl.match(/\/macros\/s\/([^/]+)\/(?:exec|dev)/);
-  return match ? match[1] : null;
-}
-
 function showScanLinkDialog() {
   var ui = SpreadsheetApp.getUi();
   var deploymentId = getDeploymentId_();
   if (!deploymentId) {
-    ui.alert('無法取得部署 ID，請確認此腳本已部署為 Web 應用程式。');
+    ui.alert(
+      '尚未記錄部署 ID：請先直接開啟一次 /exec 網址（不帶 ?bridge=1），' +
+        '讓 doGet 記錄下目前的部署 ID，再重新執行這個選單項目。',
+    );
     return;
   }
 
