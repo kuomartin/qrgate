@@ -44,6 +44,12 @@ var sheetTicketStore = {
     var row = findTicketRow_(sheet, serial);
     return row ? rowToTicketRecord_(sheet, row) : null;
   },
+  // The script lock serializes every concurrent markCheckedIn call across all
+  // simultaneous executions of this deployment, so the read-status/write-status
+  // pair below is atomic: whichever call acquires the lock first gets `success`,
+  // every other concurrent call for the same serial sees status === 'checked-in'
+  // and returns false — checkIn() then tells them apart via gateId (own vs. a
+  // different gate) rather than by timestamp.
   markCheckedIn: function (serial, gateId) {
     var lock = LockService.getScriptLock();
     lock.waitLock(10000);

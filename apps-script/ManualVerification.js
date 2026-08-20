@@ -27,6 +27,14 @@ function runAcceptanceChecks() {
   check('對同一序號再次 checkInTicket 回傳 already-used', second.outcome === 'already-used');
   check('already-used 沒有覆蓋原本的 gate/時間記錄', sheetTicketStore.findBySerial(reuseSerial).checkedInBy === 'gate-1');
 
+  var contestedSerial = batchGenerateTickets('physical', 1)[0];
+  var wonByGateA = checkInTicket(contestedSerial, 'gate-A');
+  check('第一個入口 checkInTicket 回傳 success', wonByGateA.outcome === 'success');
+  var lostByGateB = checkInTicket(contestedSerial, 'gate-B');
+  check('不同入口再次 checkInTicket 回傳 used-elsewhere（而非 already-used）', lostByGateB.outcome === 'used-elsewhere');
+  var lostByGateAAgain = checkInTicket(contestedSerial, 'gate-A');
+  check('原本成功的入口重複掃描回傳 already-used（而非 used-elsewhere）', lostByGateAAgain.outcome === 'already-used');
+
   var tamperedSerial = physicalSerials[2].slice(0, -1) + (physicalSerials[2].slice(-1) === '0' ? '1' : '0');
   var tamperedResult = checkInTicket(tamperedSerial, 'gate-1');
   check('竄改過的序號 checkInTicket 回傳 invalid', tamperedResult.outcome === 'invalid');

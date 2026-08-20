@@ -101,13 +101,10 @@ function callGas(action, payload) {
 // =======================================
 
 // ====== check-in 結果顯示 ======
-// checkInTicket() 的 outcome 有 success / already-used / used-elsewhere /
-// invalid，這張票只做基本三段式訊息（成功／已使用／無效），already-used 和
-// used-elsewhere 的分級留給之後的票。
 const OUTCOME_DISPLAY = {
   success: { type: "success", message: "入場成功" },
   "already-used": { type: "already-used", message: "已使用過" },
-  "used-elsewhere": { type: "already-used", message: "已使用過" },
+  "used-elsewhere": { type: "used-elsewhere", message: "已於其他地點入場" },
   invalid: { type: "invalid", message: "無效票" },
 };
 
