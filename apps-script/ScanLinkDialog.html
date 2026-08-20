@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 1rem;
+      }
+      #qrcode {
+        display: inline-block;
+        margin: 1rem 0;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <p>掃描下方 QR，或複製連結給工作人員：</p>
+    <div id="qrcode"></div>
+    <input type="text" id="scan-url" readonly value="<?= scanUrl ?>" onclick="this.select()" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      new QRCode(document.getElementById('qrcode'), {
+        text: '<?= scanUrl ?>',
+        width: 220,
+        height: 220,
+        colorDark: '#1976d2',
+        colorLight: '#ffffff',
+      });
+    </script>
+  </body>
+</html>

@@ -20,6 +20,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('QRGate')
     .addItem('批次產生實體索票', 'showBatchGeneratePhysicalPrompt')
+    .addItem('產生掃描連結', 'showScanLinkDialog')
     .addToUi();
 }
 
@@ -40,4 +41,26 @@ function showBatchGeneratePhysicalPrompt() {
 
   var serials = batchGenerateTickets('physical', count);
   ui.alert('已產生 ' + serials.length + ' 筆實體索票序號，可在 Tickets 分頁查看。');
+}
+
+var SCANNER_BASE_URL = 'https://kuomartin.github.io/qrgate/scan/';
+
+function getDeploymentId_() {
+  var serviceUrl = ScriptApp.getService().getUrl();
+  var match = serviceUrl && serviceUrl.match(/\/macros\/s\/([^/]+)\/(?:exec|dev)/);
+  return match ? match[1] : null;
+}
+
+function showScanLinkDialog() {
+  var ui = SpreadsheetApp.getUi();
+  var deploymentId = getDeploymentId_();
+  if (!deploymentId) {
+    ui.alert('無法取得部署 ID，請確認此腳本已部署為 Web 應用程式。');
+    return;
+  }
+
+  var scanUrl = SCANNER_BASE_URL + '?id=' + encodeURIComponent(deploymentId);
+  var template = HtmlService.createTemplateFromFile('ScanLinkDialog');
+  template.scanUrl = scanUrl;
+  ui.showModalDialog(template.evaluate().setWidth(360).setHeight(420), '掃描連結與 QR Code');
 }
