@@ -6,7 +6,10 @@ var PROP_PUBLIC_KEY = 'PUBLIC_KEY';
 var SCAN_BASE_URL = 'https://kuomartin.github.io/qrgate/';
 var QR_ROW_HEIGHT_PX = 120;
 
-var serial = Serial.create(nacl);
+// 用到時才建，不依賴 Apps Script 專案內的檔案順序（手動複製檔案時順序常不同）。
+function serial_() {
+  return Serial.create(nacl);
+}
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -37,7 +40,7 @@ function loadKeyPair_() {
   var props = PropertiesService.getScriptProperties();
   var seedText = props.getProperty(PROP_SEED);
   if (!seedText) return null;
-  return serial.keyPairFromSeed(Serial.fromBase64url(seedText));
+  return serial_().keyPairFromSeed(Serial.fromBase64url(seedText));
 }
 
 function generateKeyPair() {
@@ -52,7 +55,7 @@ function generateKeyPair() {
     if (answer !== ui.Button.YES) return;
   }
   var seed = randomBytes_(nacl.sign.seedLength);
-  var keys = serial.keyPairFromSeed(seed);
+  var keys = serial_().keyPairFromSeed(seed);
   props.setProperties({
     SIGNING_SEED: Serial.toBase64url(seed),
     PUBLIC_KEY: Serial.toBase64url(keys.publicKey),
@@ -94,7 +97,7 @@ function generateSerialsFromSelection() {
 
   var rows = [];
   for (var i = 0; i < count; i++) {
-    var token = serial.issue(keys.secretKey, randomBytes_(serial.ID_LENGTH));
+    var token = serial_().issue(keys.secretKey, randomBytes_(serial_().ID_LENGTH));
     rows.push([token, qrCellImage_(token)]);
   }
   target.setValues(rows);
