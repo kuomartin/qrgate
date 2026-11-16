@@ -1,26 +1,26 @@
 # qrgate
 
-Ticket issuance and gate-scanning for events: generate verifiable ticket serial codes, scan them at entry, and surface check-in stats to organizers.
+在 Google Sheet 批次簽發防偽序號（文字 + QR Code），並用一個純靜態的 GitHub Pages 頁面掃描驗證。
 
 ## Language
 
-**Event（活動）**:
-A single occurrence being ticketed. Each Event owns exactly one Google Sheet as its data backend (tickets, check-in log, stats) — ticket namespaces do not cross Events.
-
-**Ticket（票券）**:
-One admission right for exactly one entrant (1:1 — no group/family tickets). Identified by a unique Serial Code.
-_Avoid_: Pass, entry code (when referring to the whole admission record, not just the code string).
-
 **Serial Code（序號）**:
-The unique code printed or QR-encoded on a Ticket. Must resist forgery/guessing and must let the system detect reuse. Format and generation algorithm not yet decided.
-_Avoid_: Ticket number (conflates the code string with the Ticket record itself).
+`<id>.<sig>`。id 是 8 bytes 隨機值的 base64url（11 字）；sig 是以該試算表的 Ed25519 私鑰對 id 字串做的 detached signature 的 base64url（86 字）。序號只給 QR 掃描，不考慮人工辨讀。
+_Avoid_: Ticket number、票號。
 
-**Channel（通路）**:
-The path by which a Ticket was issued. Launches with two parallel values — 實體索票 (physical pickup) and 線上登記 (online registration) — but is designed as an open, extensible enum (e.g. a future 貴賓/VIP value can be added without changing how Channel works). Only affects the Serial Code's prefix; no other behavioral difference between channels.
+**Key Pair（金鑰對）**:
+一張試算表一組 Ed25519 金鑰，由試算表選單產生，存在該 container-bound Apps Script 的 Script Properties（`SIGNING_SEED` 種子、`PUBLIC_KEY` 公鑰）。重新產生金鑰對會讓先前簽發的序號全部失效。
 
-**Check-in（入場）**:
-The act of scanning and validating a Ticket at the gate. Single-use: once a Ticket has successfully checked in, a second scan must be rejected. Always performed online (no offline/local-cache mode). Multiple gates/devices may check in against the same Event concurrently; each Check-in records which gate/device performed it — this identifier may be anonymous (a device label, not a staff identity).
-_Avoid_: Scan (the scan is the mechanism; check-in is the domain event it produces).
+**Scan Link（掃描連結）**:
+`https://kuomartin.github.io/qrgate/#pk=<公鑰>`。驗證頁從 hash 取得公鑰並記在瀏覽器的 localStorage；知道連結就能驗證，但不能簽發。
 
-**Ticket state**:
-A Ticket has exactly two states: `issued` (produced and valid, not yet used) and `checked-in` (used, terminal). There is no intermediate "claimed/distributed" state — physically handing a printed Ticket to a person before the event is not a tracked state transition; only the gate scan changes state.
+**Verify（驗證）**:
+在瀏覽器以公鑰檢查序號簽章是否成立，只回答「是不是這把金鑰簽的」。不記錄、不查表、不處理重複使用。
+_Avoid_: Check-in、入場（那是有狀態的領域事件，本專案不做）。
+
+## Layout
+
+- `src/serial.js` — 序號編碼／簽發／驗證的純函式，掛在 `globalThis.Serial`，Apps Script、驗證頁、node 測試共用同一份。
+- `apps-script/` — container-bound 專案（clasp）。`Code.js` 是選單與金鑰管理；`serial.js`、`vendor_*.js` 由 `npm run build` 從 `src/` 與 `node_modules/` 複製，不要手改。
+- `docs/` — GitHub Pages 驗證頁。`serial.js`、`vendor/` 同樣由 build 產生。
+- `npm test` 跑 node 測試；`npm run push` 先 build 再 `clasp push`。

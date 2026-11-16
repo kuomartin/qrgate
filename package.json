@@ -7,9 +7,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test"
+    "build": "node scripts/build.js",
+    "test": "node --test",
+    "push": "npm run build && clasp push"
   },
   "devDependencies": {
-    "@google/clasp": "^3.3.0"
+    "@google/clasp": "^3.4.1"
+  },
+  "dependencies": {
+    "qrcode-generator": "^2.0.4",
+    "tweetnacl": "^1.0.3"
   }
 }

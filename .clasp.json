@@ -1,4 +1,11 @@
 {
-  "scriptId": "1uzSZJHXQFEHJl2oBWdztdFI-WuTk29zegAMRzDsjdR_aen5-MEBc9a7s",
-  "rootDir": "apps-script"
+  "scriptId": "1UmPH9WV2RPwhz2LvzdL0R9mKC5g9p6eHROFvVWI4mzb93NqvZqccDEps",
+  "parentId": "12KNUubtIlAG63Mi0NqxHAVKt9qbnrEhonxRREEeTzB4",
+  "rootDir": "apps-script",
+  "filePushOrder": [
+    "apps-script/vendor_nacl.js",
+    "apps-script/vendor_qrcode.js",
+    "apps-script/serial.js",
+    "apps-script/Code.js"
+  ]
 }

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QRGate 序號驗證</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>QRGate 序號驗證</h1>
+
+      <div id="key-status" class="status-pill"><span id="key-status-text"></span></div>
+
+      <div id="result-banner" class="banner" style="display: none"></div>
+
+      <div id="scanner-stage"><div id="qr-reader"></div></div>
+
+      <div class="controls">
+        <button id="start-button">開始掃描</button>
+        <button id="flip-button" disabled>切換鏡頭</button>
+      </div>
+
+      <form id="manual-form" class="field">
+        <label for="manual-token">或貼上序號文字</label>
+        <input type="text" id="manual-token" autocomplete="off" spellcheck="false" />
+        <button type="submit">驗證</button>
+      </form>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="vendor/nacl-fast.min.js"></script>
+    <script src="serial.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
